@@ -1,14 +1,16 @@
 import React from 'react';
-import { StyleSheet, View, Text, Button, ImageBackground} from 'react-native';
+import { StyleSheet, View, Text, Button, ImageBackground, EventEmitter} from 'react-native';
 import { TextInput, TouchableOpacity } from 'react-native-gesture-handler';
 import {bgi} from '../assets/images/bgi.png';
+
+const background = require('../assets/images/bgi.png');
 
 export default class Start extends React.Component {
   constructor(props) {
     super(props);
     this.state = { 
       name: "",
-      bgColor: ""
+      bgColor: "",
     };
   }
 
@@ -19,6 +21,8 @@ export default class Start extends React.Component {
      changeBgColor = (newColor) => {
       this.setState({ bgColor: newColor });
     };
+
+
 
   // The colors for the swatch
   colors = {
@@ -32,7 +36,7 @@ export default class Start extends React.Component {
     return (
       <View style={styles.container}>
         <ImageBackground
-          source={bgi}
+          source={background}
           resizeMode="cover"
           style={styles.bgi}
         >
@@ -95,9 +99,7 @@ const styles = StyleSheet.create({
   },
   bgi: {
     flex: 1,
-    width: "100%",
-    flexDirection: "column",
-    alignItems: "center",
+    justifyContent: "center",
   },
   h1: {
     flexGrow: 1,
@@ -106,6 +108,7 @@ const styles = StyleSheet.create({
     color: "white",
     paddingTop: 60,
     fontSize: 40,
+    margin: 10,
   },
   box: {
     backgroundColor: "#ffffffc4",
@@ -116,6 +119,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "space-evenly",
     alignItems: "center",
+    alignSelf:"center",
     padding: 30,
     height: 260,
     minHeight: 260,

@@ -71,10 +71,12 @@ export default class Chat extends React.Component {
 
   render() {
     let name = this.props.route.params.name;
+    //background color from Start Screen
+    let { bgColor } = this.props.route.params;
     //title on top of the screen
     this.props.navigation.setOptions({ title:name });
     return(
-      <View style={styles.container}>
+      <View style={styles.container, {flex:1, backgroundColor: bgColor}}>
         <GiftedChat
           renderBubble={this.renderBubble.bind(this)}
           messages={this.state.messages}
