@@ -3,8 +3,8 @@ import { Bubble, GiftedChat } from "react-native-gifted-chat";
 //used to determine the OS currently in use)
 import { StyleSheet, View, Platform, KeyboardAvoidingView } from 'react-native';
 
-import firebase from "firebase";
-import("firebase/firestore");
+const firebase = require('firebase');
+require('firebase/firestore');
 
 
 export default class Chat extends React.Component {
@@ -134,7 +134,6 @@ onCollectionUpdate = (querySnapshot) => {
     let { bgColor } = this.props.route.params;
     //title on top of the screen
     this.props.navigation.setOptions({ title:name });
-    <Text>{this.state.loggedInText}</Text>
     return(
       <View style={styles.container, {flex:1, backgroundColor: bgColor}}>
         <GiftedChat
