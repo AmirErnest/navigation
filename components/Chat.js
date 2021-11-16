@@ -12,6 +12,11 @@ export default class Chat extends React.Component {
     super();
     this.state = {
       messages: [],
+      uid: 0,
+      user: {
+        _id: '',
+        name: ''
+      }
     }
     //initialize the Firestore app
     if (!firebase.apps.length) {
@@ -31,22 +36,27 @@ export default class Chat extends React.Component {
 
     // add message to firestore
     addMessage() {
-      const message = this.state.messages;
+      const username = this.props.route.params.name;
+      const message = this.state.messages[0];
       this.referenceChatMessages.add({
         _id: message._id,
-        uid: this.state.uid,
+        text: message.text,
         createdAt: message.createdAt,
-        text: message.text || '',
-        user: message.user,
+        user: {
+          _id: this.state.uid,
+          name: username,
+        },
       });
     }
 
 
   onSend(messages = []) {
-    this.setState((previousState) => ({
+    this.setState(previousState => ({
       messages: GiftedChat.append(previousState.messages, messages),
-    }));
-    this.addMessage();
+    }),
+    () => { 
+      this.addMessage();
+    })
   }
   
   componentDidMount() {
@@ -82,6 +92,10 @@ export default class Chat extends React.Component {
    //update the user state with currently active user data
    this.setState({
      uid: user.uid,
+     user: {
+       _id: user.uid,
+       name: name,
+     },
      messages: [],
    });
    this.unsubscribe = this.referenceChatMessages
@@ -94,7 +108,7 @@ componentWillUnmount() {
   // stop listening to authentication
     this.authUnsubscribe();
     // stop listening for changes
-    this.unsubscribeChatUser(); 
+    this.unsubscribe(); 
   }
 
 onCollectionUpdate = (querySnapshot) => {
@@ -107,7 +121,10 @@ onCollectionUpdate = (querySnapshot) => {
       _id: data._id,
       text: data.text,
       createdAt: data.createdAt.toDate(),
-      user: data.user,
+      user: {
+        _id: data.user._id,
+        name: data.user.name
+      }
     });
   });
     this.setState({
@@ -121,7 +138,11 @@ onCollectionUpdate = (querySnapshot) => {
         {...props}
         wrapperStyle={{
           right: {
-            backgroundColor: '#000'
+            backgroundColor: '#164021',
+            color: '#FFF'
+          },
+          left: {
+            backgroundColor: '#cccfcd',
           }
         }}
       />
@@ -140,9 +161,7 @@ onCollectionUpdate = (querySnapshot) => {
           renderBubble={this.renderBubble.bind(this)}
           messages={this.state.messages}
           onSend={messages => this.onSend(messages)}
-          user={{
-            _id: 1,
-          }}
+          user={this.state.user}
         />
         { Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null }
       </View>
