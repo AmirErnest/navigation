@@ -6,6 +6,8 @@ import { StyleSheet, View, Platform, KeyboardAvoidingView } from 'react-native';
 import firebase from "firebase";
 import "firebase/firestore";
 
+import AsyncStorage from '@react-native-community/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 
 export default class Chat extends React.Component {
   constructor() {
@@ -49,45 +51,63 @@ export default class Chat extends React.Component {
       });
     }
 
+    async deleteMessages() {
+      try {
+        await AsyncStorage.removeItem('messages');
+        this.setState({
+          messages: []
+        })
+      } catch (error) {
+        console.log(error.message);
+      }
+    }
+
+    async saveMessages() {
+      try {
+        await AsyncStorage.setItem('messages', JSON.stringify(this.state.messages));
+      } catch (error) {
+        console.log(error.message);
+      }
+    }
 
   onSend(messages = []) {
     this.setState(previousState => ({
       messages: GiftedChat.append(previousState.messages, messages),
     }),
     () => { 
-      this.addMessage();
+      this.saveMessages();
     })
   }
+
+  async getMessages() {
+    let messages = '';
+    try {
+      messages = await AsyncStorage.getItem('messages') || [];
+      this.setState({
+        messages: JSON.parse(messages)
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
   
   componentDidMount() {
+    NetInfo.fetch().then(connection => {
+      if (connection.isConnected) {
+        console.log('online');
+      } else {
+        console.log('offline');
+      }
+    });
+    
     //inputted name from Start screen
     let name = this.props.route.params.name;
-    /*
-    this.setState({
-      messages: [
-        {
-          _id: 1,
-          text: 'This is a system message',
-          createdAt: new Date(),
-          system: true,
-         },
-        {
-          _id: 2,
-          text: 'Hello developer',
-          createdAt: new Date(),
-          user: {
-            _id: 2,
-            name: 'React Native',
-            avatar: 'https://placeimg.com/140/140/any',
-          },
-         },
-      ],
-  });
-  */
- this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
-   if(!user) {
-     firebase.auth().signInAnonymously();
-   }
+    this.getMessages();
+
+    this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
+      if(!user) {
+      firebase.auth().signInAnonymously();
+    }
 
    //update the user state with currently active user data
    this.setState({
