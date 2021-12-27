@@ -2,6 +2,7 @@ import React from "react";
 import { Bubble, GiftedChat } from "react-native-gifted-chat";
 //used to determine the OS currently in use)
 import { StyleSheet, View, Platform, KeyboardAvoidingView, Button } from 'react-native';
+import Start from './Start';
 
 import firebase from "firebase";
 import "firebase/firestore";
@@ -24,6 +25,7 @@ export default class Chat extends React.Component {
         name: ''
       },
       image: null,
+      isConnected: false
     };
     //initialize the Firestore app
     if (!firebase.apps.length) {
@@ -157,6 +159,33 @@ onCollectionUpdate = (querySnapshot) => {
     });
 };
 
+//checks network status of the user
+handleConnectivityChange = (state) => {
+  const isConnected = state.isConnected;
+  if (isConnected == true) {
+    this.setState({
+      isConnected: true,
+    });
+    this.unsubscribe = this.referenceChatMessages
+      .orderBy("createdAt", "desc")
+      .onSnapshot(this.onCollectionUpdate);
+  } else {
+    this.setState({
+      isConnected: false,
+    });
+  }
+};
+
+//hides Inputbar when offline
+renderInputToolbar = (props) => {
+  console.log("renderInputToolbar --> props", props.isConnected);
+  if (props.isConnected === false) {
+    return <InputToolbar {...props} />
+  } else {
+    return <InputToolbar {...props} />;
+  }
+};
+
   renderBubble(props) {
     return (
       <Bubble
@@ -208,6 +237,7 @@ onCollectionUpdate = (querySnapshot) => {
         <GiftedChat
           renderBubble={this.renderBubble.bind(this)}
           renderActions={this.renderCustomActions}
+          renderInputToolbar={this.renderInputToolbar}
           renderCustomView={this.renderCustomView}
           messages={this.state.messages}
           onSend={messages => this.onSend(messages)}
