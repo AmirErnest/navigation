@@ -1,8 +1,8 @@
 import React from "react";
-import { Bubble, GiftedChat } from "react-native-gifted-chat";
+import { Bubble, GiftedChat, InputToolbar } from "react-native-gifted-chat";
 //used to determine the OS currently in use)
 import { StyleSheet, View, Platform, KeyboardAvoidingView, Button } from 'react-native';
-import Start from './Start';
+
 
 import firebase from "firebase";
 import "firebase/firestore";
@@ -15,7 +15,7 @@ import CustomActions from './CustomActions';
 import MapView from 'react-native-maps';
 
 export default class Chat extends React.Component {
-  constructor() {
+  constructor(props) {
     super();
     this.state = {
       messages: [],
@@ -86,6 +86,7 @@ export default class Chat extends React.Component {
     })
   }
 
+  // temporarly storage of messages
   async getMessages() {
     let messages = '';
     try {
@@ -176,7 +177,7 @@ handleConnectivityChange = (state) => {
   }
 };
 
-//hides Inputbar when offline
+//hides inputtoolbar when offline
 renderInputToolbar = (props) => {
   console.log("renderInputToolbar --> props", props.isConnected);
   if (props.isConnected === false) {
