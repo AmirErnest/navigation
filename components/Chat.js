@@ -17,7 +17,7 @@ import MapView from 'react-native-maps';
 export default class Chat extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
+    this.updateState = {
       messages: [],
       uid: 0,
       user: {
