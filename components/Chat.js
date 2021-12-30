@@ -16,7 +16,7 @@ import MapView from 'react-native-maps';
 
 export default class Chat extends React.Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
       messages: [],
       uid: 0,
@@ -163,7 +163,7 @@ onCollectionUpdate = (querySnapshot) => {
 //checks network status of the user
 handleConnectivityChange = (state) => {
   const isConnected = state.isConnected;
-  if (isConnected == true) {
+  if (isConnected) {
     this.setState({
       isConnected: true,
     });
@@ -180,11 +180,7 @@ handleConnectivityChange = (state) => {
 //hides inputtoolbar when offline
 renderInputToolbar = (props) => {
   console.log("renderInputToolbar --> props", props.isConnected);
-  if (props.isConnected === false) {
-    return <InputToolbar {...props} />
-  } else {
-    return <InputToolbar {...props} />;
-  }
+  return(!props.isConnected) ? <InputToolbar {...props} /> : " " ;
 };
 
   renderBubble(props) {
