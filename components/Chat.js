@@ -75,6 +75,7 @@ export default class Chat extends React.Component {
       messages: GiftedChat.append(previousState.messages, messages),
     }),
     () => { 
+      this.addMessages();
       this.saveMessages();
     })
   }
@@ -92,37 +93,36 @@ export default class Chat extends React.Component {
   };
   
   componentDidMount() {
-    NetInfo.fetch().then(connection => {
-      if (connection.isConnected) {
-        console.log('online');
-      } else {
-        console.log('offline');
-      }
-    });
-    
     //inputted name from Start screen
     let name = this.props.route.params.name;
-    this.getMessages();
 
-    this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
-      if(!user) {
-      firebase.auth().signInAnonymously();
-    }
+    NetInfo.fetch().then((connection) => {
+      if (connection.isConnected) {
+        this.setState({ isConnected: true });
+      
+        this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
+          if(!user) {
+          await firebase.auth().signInAnonymously();
+        }
+        //update the user state with currently active user data
+        this.setState({
+          uid: user.uid,
+          user: {
+            _id: user.uid,
+            name: name,
+          },
+          messages: [],
+        });
+      });
+      this.unsubscribe = this.referenceChatMessages.orderBy("createdAt", "desc").onSnapshot(this.onCollectionUpdate);
+      this.saveMessages();
 
-   //update the user state with currently active user data
-   this.setState({
-     uid: user.uid,
-     user: {
-       _id: user.uid,
-       name: name,
-     },
-     messages: [],
-   });
-   this.unsubscribe = this.referenceChatMessages
-    .orderBy("createdAt", "desc")
-    .onSnapshot(this.onCollectionUpdate);
- });
-}
+      } else {
+        this.setState({ isConnected: false });
+        this.getMessages();
+      }
+    });
+  }
 
 componentWillUnmount() {
   // stop listening to authentication
@@ -151,6 +151,14 @@ onCollectionUpdate = (querySnapshot) => {
       messages
     });
 };
+
+
+renderInputToolbar= (props) => {
+  if (this.state.isConnected == false) {
+  } else {
+    return <InputToolBar {...props} />
+  }
+}
 
   renderBubble(props) {
     return (
@@ -182,6 +190,7 @@ onCollectionUpdate = (querySnapshot) => {
           messages={this.state.messages}
           onSend={messages => this.onSend(messages)}
           user={this.state.user}
+          renderInputToolbar={this.renderInputToolbar}
         />
         { Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null }
       </View>
