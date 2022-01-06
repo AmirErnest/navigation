@@ -77,14 +77,15 @@ export default class Chat extends React.Component {
       }
     }
 
-  onSend(messages = []) {
-    this.setState(previousState => ({
-      messages: GiftedChat.append(previousState.messages, messages),
-    }),
-    () => { 
-      this.saveMessages();
-    })
-  }
+    onSend(messages = []) {
+      this.setState(previousState => ({
+        messages: GiftedChat.append(previousState.messages, messages),
+      }),
+      () => { 
+        this.addMessages();
+        this.saveMessages();
+      })
+    }
 
   // temporarly storage of messages
   async getMessages() {
@@ -100,37 +101,36 @@ export default class Chat extends React.Component {
   };
   
   componentDidMount() {
-    NetInfo.fetch().then(connection => {
-      if (connection.isConnected) {
-        console.log('online');
-      } else {
-        console.log('offline');
-      }
-    });
-    
     //inputted name from Start screen
     let name = this.props.route.params.name;
-    this.getMessages();
 
-    this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
-      if(!user) {
-      firebase.auth().signInAnonymously();
-    }
+    NetInfo.fetch().then((connection) => {
+      if (connection.isConnected) {
+        this.setState({ isConnected: true });
+      
+        this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
+          if(!user) {
+          await firebase.auth().signInAnonymously();
+        }
+        //update the user state with currently active user data
+        this.setState({
+          uid: user.uid,
+          user: {
+            _id: user.uid,
+            name: name,
+          },
+          messages: [],
+        });
+      });
+      this.unsubscribe = this.referenceChatMessages.orderBy("createdAt", "desc").onSnapshot(this.onCollectionUpdate);
+      this.saveMessages();
 
-   //update the user state with currently active user data
-   this.setState({
-     uid: user.uid,
-     user: {
-       _id: user.uid,
-       name: name,
-     },
-     messages: [],
-   });
-   this.unsubscribe = this.referenceChatMessages
-    .orderBy("createdAt", "desc")
-    .onSnapshot(this.onCollectionUpdate);
- });
-}
+      } else {
+        this.setState({ isConnected: false });
+        this.getMessages();
+      }
+    });
+  }
 
 componentWillUnmount() {
   // stop listening to authentication
@@ -160,28 +160,12 @@ onCollectionUpdate = (querySnapshot) => {
     });
 };
 
-//checks network status of the user
-handleConnectivityChange = (state) => {
-  const isConnected = state.isConnected;
-  if (isConnected) {
-    this.setState({
-      isConnected: true,
-    });
-    this.unsubscribe = this.referenceChatMessages
-      .orderBy("createdAt", "desc")
-      .onSnapshot(this.onCollectionUpdate);
-  } else {
-    this.setState({
-      isConnected: false,
-    });
+  renderInputToolbar= (props) => {
+    if (this.state.isConnected == false) {
+    } else {
+      return <InputToolBar {...props} />
+    }
   }
-};
-
-//hides inputtoolbar when offline
-renderInputToolbar = (props) => {
-  console.log("renderInputToolbar --> props", props.isConnected);
-  return(!props.isConnected) ? <InputToolbar {...props} /> : " " ;
-};
 
   renderBubble(props) {
     return (
