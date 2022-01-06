@@ -18,7 +18,8 @@ export default class Chat extends React.Component {
       user: {
         _id: '',
         name: ''
-      }
+      },
+      isConnected: false,
     };
     //initialize the Firestore app
     if (!firebase.apps.length) {
