@@ -101,6 +101,9 @@ export default class Chat extends React.Component {
   };
 
   componentDidMount() {
+    //title on top of the screen
+    this.props.navigation.setOptions({ title:name });
+    
     let name = this.props.route.params.name;
 
     NetInfo.fetch().then((connection) => {
@@ -208,8 +211,6 @@ export default class Chat extends React.Component {
     let name = this.props.route.params.name;
     //background color from Start Screen
     let { bgColor } = this.props.route.params;
-    //title on top of the screen
-    this.props.navigation.setOptions({ title:name });
     return (
       <View style={(styles.container, {flex:1, backgroundColor: bgColor})}>
         <GiftedChat
