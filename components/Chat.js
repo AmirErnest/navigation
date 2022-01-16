@@ -1,7 +1,7 @@
 import React from "react";
 import { Bubble, GiftedChat, InputToolbar } from "react-native-gifted-chat";
 //used to determine the OS currently in use)
-import { StyleSheet, View, Platform, KeyboardAvoidingView, Button } from 'react-native';
+import { StyleSheet, View, Platform, KeyboardAvoidingView } from 'react-native';
 
 
 import firebase from "firebase";
@@ -43,50 +43,51 @@ export default class Chat extends React.Component {
     this.referenceChatMessages = firebase.firestore().collection("messages");
   }
 
-    // add message to firestore
-    addMessage() {
-      const username = this.props.route.params.name;
-      const message = this.state.messages[0];
-      this.referenceChatMessages.add({
-        _id: message._id,
-        text: message.text,
-        createdAt: message.createdAt,
-        user: {
-          _id: this.state.uid,
-          name: username,
-        },
-      });
-    }
+  // add message to firestore
+  addMessage() {
+    const username = this.props.route.params.name;
+    const message = this.state.messages[0];
+    console.log("hereeeee", message)
+    this.referenceChatMessages.add({
+      _id: message._id,
+      text: message.text,
+      createdAt: message.createdAt,
+      user: {
+        _id: this.state.uid,
+        name: username,
+      },
+    });
+  }
 
-    async deleteMessages() {
-      try {
-        await AsyncStorage.removeItem('messages');
-        this.setState({
-          messages: []
-        })
-      } catch (error) {
-        console.log(error.message);
-      }
+  async deleteMessages() {
+    try {
+      await AsyncStorage.removeItem('messages');
+      this.setState({
+        messages: []
+      })
+    } catch (error) {
+      console.log(error.message);
     }
+  }
 
-    async saveMessages() {
-      try {
-        await AsyncStorage.setItem('messages', JSON.stringify(this.state.messages));
-      } catch (error) {
-        console.log(error.message);
-      }
+  async saveMessages() {
+    try {
+      await AsyncStorage.setItem('messages', JSON.stringify(this.state.messages));
+    } catch (error) {
+      console.log(error.message);
     }
+  }
 
   onSend(messages = []) {
     this.setState(previousState => ({
       messages: GiftedChat.append(previousState.messages, messages),
     }),
-    () => { 
-      this.saveMessages();
-    })
+      () => {
+        this.addMessage()
+        this.saveMessages();
+      })
   }
 
-  // temporarly storage of messages
   async getMessages() {
     let messages = '';
     try {
@@ -98,91 +99,74 @@ export default class Chat extends React.Component {
       console.log(error.message);
     }
   };
-  
+
   componentDidMount() {
-    NetInfo.fetch().then(connection => {
+    //title on top of the screen
+    this.props.navigation.setOptions({ title:name });
+    
+    let name = this.props.route.params.name;
+
+    NetInfo.fetch().then((connection) => {
       if (connection.isConnected) {
-        console.log('online');
+        this.setState({ isConnected: true });
+
+
+        this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
+          if (!user) {
+            await firebase.auth().signInAnonymously();
+          }
+          this.setState({
+            uid: user.uid,
+            user: {
+              _id: user.uid,
+              name: name,
+            },
+            messages: [],
+          });
+        });
+        this.unsubscribe = this.referenceChatMessages.orderBy("createdAt", "desc").onSnapshot(this.onCollectionUpdate);
+        this.saveMessages();
+
       } else {
-        console.log('offline');
+        this.setState({ isConnected: false });
+        this.getMessages();
       }
     });
-    
-    //inputted name from Start screen
-    let name = this.props.route.params.name;
-    this.getMessages();
-
-    this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
-      if(!user) {
-      firebase.auth().signInAnonymously();
-    }
-
-   //update the user state with currently active user data
-   this.setState({
-     uid: user.uid,
-     user: {
-       _id: user.uid,
-       name: name,
-     },
-     messages: [],
-   });
-   this.unsubscribe = this.referenceChatMessages
-    .orderBy("createdAt", "desc")
-    .onSnapshot(this.onCollectionUpdate);
- });
-}
-
-componentWillUnmount() {
-  // stop listening to authentication
-    this.authUnsubscribe();
-    // stop listening for changes
-    this.unsubscribe(); 
   }
 
-onCollectionUpdate = (querySnapshot) => {
-  const messages = [];
-  // go through each document
-  querySnapshot.forEach((doc) => {
-    //get the QueryDocumentSnapshot's data
-    let data = doc.data();
-    messages.push({
-      _id: data._id,
-      text: data.text,
-      createdAt: data.createdAt.toDate(),
-      user: {
-        _id: data.user._id,
-        name: data.user.name
-      }
+  componentWillUnmount() {
+    // stop listening to authentication
+    this.authUnsubscribe();
+    // stop listening for changes
+    this.unsubscribe();
+  }
+
+  onCollectionUpdate = (querySnapshot) => {
+    const messages = [];
+    // go through each document
+    querySnapshot.forEach((doc) => {
+      //get the QueryDocumentSnapshot's data
+      let data = doc.data();
+      messages.push({
+        _id: data._id,
+        text: data.text,
+        createdAt: data.createdAt.toDate(),
+        user: {
+          _id: data.user._id,
+          name: data.user.name
+        }
+      });
     });
-  });
     this.setState({
       messages
     });
-};
-
-//checks network status of the user
-handleConnectivityChange = (state) => {
-  const isConnected = state.isConnected;
-  if (isConnected) {
-    this.setState({
-      isConnected: true,
-    });
-    this.unsubscribe = this.referenceChatMessages
-      .orderBy("createdAt", "desc")
-      .onSnapshot(this.onCollectionUpdate);
-  } else {
-    this.setState({
-      isConnected: false,
-    });
+  };
+  renderInputToolbar = (props) => {
+    if (this.state.isConnected == false) {
+    } else {
+      return <InputToolbar {...props} />;
+    }
   }
-};
-
-//hides inputtoolbar when offline
-renderInputToolbar = (props) => {
-  console.log("renderInputToolbar --> props", props.isConnected);
-  return(!props.isConnected) ? <InputToolbar {...props} /> : " " ;
-};
-
   renderBubble(props) {
     return (
       <Bubble
@@ -227,8 +211,6 @@ renderInputToolbar = (props) => {
     let name = this.props.route.params.name;
     //background color from Start Screen
     let { bgColor } = this.props.route.params;
-    //title on top of the screen
-    this.props.navigation.setOptions({ title:name });
     return (
       <View style={(styles.container, {flex:1, backgroundColor: bgColor})}>
         <GiftedChat
