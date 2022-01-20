@@ -101,10 +101,10 @@ export default class Chat extends React.Component {
   };
 
   componentDidMount() {
+    let name = this.props.route.params.name;
+    
     //title on top of the screen
     this.props.navigation.setOptions({ title:name });
-    
-    let name = this.props.route.params.name;
 
     NetInfo.fetch().then((connection) => {
       if (connection.isConnected) {
