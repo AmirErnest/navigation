@@ -47,15 +47,13 @@ export default class Chat extends React.Component {
   addMessage() {
     const username = this.props.route.params.name;
     const message = this.state.messages[0];
-    console.log("hereeeee", message)
     this.referenceChatMessages.add({
-      _id: message._id,
-      text: message.text,
+      _id: message._id || null,
+      text: message.text || '',
       createdAt: message.createdAt,
-      user: {
-        _id: this.state.uid,
-        name: username,
-      },
+      user: message.user,
+      image: message.image || null,
+      location: message.location || null
     });
   }
 
@@ -101,10 +99,10 @@ export default class Chat extends React.Component {
   };
 
   componentDidMount() {
+    let name = this.props.route.params.name;
+    
     //title on top of the screen
     this.props.navigation.setOptions({ title:name });
-    
-    let name = this.props.route.params.name;
 
     NetInfo.fetch().then((connection) => {
       if (connection.isConnected) {
@@ -149,12 +147,14 @@ export default class Chat extends React.Component {
       let data = doc.data();
       messages.push({
         _id: data._id,
-        text: data.text,
+        text: data.text || '',
         createdAt: data.createdAt.toDate(),
         user: {
           _id: data.user._id,
           name: data.user.name
-        }
+        },
+        image: data.image || null,
+        location: data.location || null
       });
     });
     this.setState({
